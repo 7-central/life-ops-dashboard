@@ -3,17 +3,18 @@
 import { captureRepository } from '@/data/repositories/capture-repository';
 import { taskRepository } from '@/data/repositories/task-repository';
 import { canMarkTaskReady } from '@/domain/task/rules';
-import { DomainArea } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
 
 export interface CreateTaskFromCaptureInput {
   captureId: string;
   title: string;
-  domainArea?: DomainArea;
+  domainAreaId: string;
+  projectId?: string;
   dodItems: string[];
   nextAction: string;
   durationMinutes: number;
   notes?: string;
+  tags?: string[];
 }
 
 export interface CreateTaskResult {
@@ -39,17 +40,19 @@ export async function createTaskFromCapture(
     // Create task
     const task = await taskRepository.create({
       title: input.title,
-      domainArea: input.domainArea,
+      domainAreaId: input.domainAreaId,
+      projectId: input.projectId,
       dodItems: input.dodItems,
       nextAction: input.nextAction,
       durationMinutes: input.durationMinutes,
       notes: input.notes,
+      tags: input.tags,
       originCaptureItemId: input.captureId,
     });
 
     // Check if task meets READY criteria
     const readyCheck = canMarkTaskReady({
-      domainArea: input.domainArea,
+      domainAreaId: input.domainAreaId,
       dodItems: input.dodItems,
       nextAction: input.nextAction,
       durationMinutes: input.durationMinutes,
@@ -64,6 +67,7 @@ export async function createTaskFromCapture(
     await captureRepository.markProcessed(input.captureId);
 
     revalidatePath('/clarify');
+    revalidatePath('/');
 
     return {
       success: true,

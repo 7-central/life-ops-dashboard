@@ -1,26 +1,41 @@
 import { prisma } from '../prisma';
-import type { TaskStatus, DomainArea } from '@prisma/client';
+import type { TaskStatus, PriorityBucket, EnergyLevel } from '@prisma/client';
 
 export interface CreateTaskData {
   title: string;
-  domainArea?: DomainArea;
+  domainAreaId?: string;
+  projectId?: string;
   dodItems?: string[];
   nextAction?: string;
   durationMinutes?: number;
   notes?: string;
   tags?: string[];
+  contexts?: string[];
+  dueAt?: Date;
+  energyFit?: EnergyLevel;
+  urgency?: number;
+  impact?: number;
+  effort?: number;
   originCaptureItemId?: string;
 }
 
 export interface UpdateTaskData {
   title?: string;
-  domainArea?: DomainArea;
   status?: TaskStatus;
+  domainAreaId?: string;
+  projectId?: string;
   dodItems?: string[];
   nextAction?: string;
   durationMinutes?: number;
+  priorityBucket?: PriorityBucket | null;
+  dueAt?: Date | null;
+  energyFit?: EnergyLevel | null;
+  urgency?: number | null;
+  impact?: number | null;
+  effort?: number | null;
   notes?: string;
   tags?: string[];
+  contexts?: string[];
 }
 
 export const taskRepository = {
@@ -31,12 +46,19 @@ export const taskRepository = {
     return prisma.task.create({
       data: {
         title: data.title,
-        domainArea: data.domainArea,
+        domainAreaId: data.domainAreaId,
+        projectId: data.projectId,
         dodItems: data.dodItems || [],
         nextAction: data.nextAction,
         durationMinutes: data.durationMinutes,
+        dueAt: data.dueAt,
+        energyFit: data.energyFit,
+        urgency: data.urgency,
+        impact: data.impact,
+        effort: data.effort,
         notes: data.notes,
         tags: data.tags || [],
+        contexts: data.contexts || [],
         originCaptureItemId: data.originCaptureItemId,
       },
     });
@@ -49,6 +71,8 @@ export const taskRepository = {
     return prisma.task.findUnique({
       where: { id },
       include: {
+        domainArea: true,
+        project: true,
         originCaptureItem: true,
         timeBlocks: true,
         shippedOutputs: true,
@@ -72,6 +96,10 @@ export const taskRepository = {
   async getByStatus(status: TaskStatus) {
     return prisma.task.findMany({
       where: { status },
+      include: {
+        domainArea: true,
+        project: true,
+      },
       orderBy: { createdAt: 'desc' },
     });
   },

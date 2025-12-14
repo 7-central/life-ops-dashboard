@@ -7,10 +7,15 @@ import type { Task, TaskStatus } from './types';
 /**
  * Rule: Task cannot be marked READY without required fields
  */
-export function canMarkTaskReady(task: Partial<Task>): { valid: boolean; errors: string[] } {
+export function canMarkTaskReady(task: {
+  domainAreaId?: string | null;
+  dodItems?: string[];
+  nextAction?: string | null;
+  durationMinutes?: number | null;
+}): { valid: boolean; errors: string[] } {
   const errors: string[] = [];
 
-  if (!task.domainArea) {
+  if (!task.domainAreaId) {
     errors.push('Domain area is required');
   }
 

@@ -1,8 +1,14 @@
 import { captureRepository } from '@/data/repositories/capture-repository';
+import { domainAreaRepository } from '@/data/repositories/domain-area-repository';
+import { projectRepository } from '@/data/repositories/project-repository';
 import { ClarifyItem } from '@/components/features/clarify-item';
 
 export default async function ClarifyPage() {
-  const unprocessedItems = await captureRepository.getUnprocessed();
+  const [unprocessedItems, domainAreas, projects] = await Promise.all([
+    captureRepository.getUnprocessed(),
+    domainAreaRepository.getActive(),
+    projectRepository.getActive(),
+  ]);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -38,7 +44,12 @@ export default async function ClarifyPage() {
 
             <div className="space-y-4">
               {unprocessedItems.map((item) => (
-                <ClarifyItem key={item.id} capture={item} />
+                <ClarifyItem
+                  key={item.id}
+                  capture={item}
+                  domainAreas={domainAreas}
+                  projects={projects}
+                />
               ))}
             </div>
           </>

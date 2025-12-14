@@ -5,22 +5,23 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { createTaskFromCapture, parkCaptureItem, deleteCaptureItem } from '@/app/clarify/actions';
-import type { CaptureItem } from '@prisma/client';
+import type { CaptureItem, DomainArea, Project } from '@prisma/client';
 
 interface ClarifyItemProps {
   capture: CaptureItem;
+  domainAreas: DomainArea[];
+  projects: Project[];
 }
 
-const DOMAIN_AREAS = ['WORK', 'PERSONAL', 'HEALTH', 'LEARNING', 'ADMIN', 'CREATIVE', 'SOCIAL', 'OTHER'];
-
-export function ClarifyItem({ capture }: ClarifyItemProps) {
+export function ClarifyItem({ capture, domainAreas, projects }: ClarifyItemProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
   // Form state
   const [title, setTitle] = useState(capture.rawText);
-  const [domainArea, setDomainArea] = useState('');
+  const [domainAreaId, setDomainAreaId] = useState('');
+  const [projectId, setProjectId] = useState('');
   const [dod1, setDod1] = useState('');
   const [dod2, setDod2] = useState('');
   const [dod3, setDod3] = useState('');
@@ -38,7 +39,8 @@ export function ClarifyItem({ capture }: ClarifyItemProps) {
     const result = await createTaskFromCapture({
       captureId: capture.id,
       title,
-      domainArea: domainArea as any,
+      domainAreaId,
+      projectId: projectId || undefined,
       dodItems,
       nextAction,
       durationMinutes: parseInt(duration, 10),
@@ -107,15 +109,31 @@ export function ClarifyItem({ capture }: ClarifyItemProps) {
         <div>
           <label className="block text-sm font-medium mb-1">Domain Area *</label>
           <select
-            value={domainArea}
-            onChange={(e) => setDomainArea(e.target.value)}
+            value={domainAreaId}
+            onChange={(e) => setDomainAreaId(e.target.value)}
             className="w-full h-10 px-3 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900"
             required
           >
             <option value="">Select domain...</option>
-            {DOMAIN_AREAS.map((area) => (
-              <option key={area} value={area}>
-                {area}
+            {domainAreas.map((area) => (
+              <option key={area.id} value={area.id}>
+                {area.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-1">Project (optional)</label>
+          <select
+            value={projectId}
+            onChange={(e) => setProjectId(e.target.value)}
+            className="w-full h-10 px-3 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900"
+          >
+            <option value="">No project</option>
+            {projects.map((project) => (
+              <option key={project.id} value={project.id}>
+                {project.name}
               </option>
             ))}
           </select>
