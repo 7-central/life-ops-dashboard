@@ -1,9 +1,10 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import { Nav } from '@/components/ui/nav';
 
 export const metadata: Metadata = {
   title: 'Life Ops Dashboard',
-  description: 'ADHD-optimized life management system',
+  description: 'Operational life management system',
 };
 
 export default function RootLayout({
@@ -13,7 +14,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="antialiased">{children}</body>
+      <body className="antialiased">
+        <Nav />
+        <main>{children}</main>
+      </body>
     </html>
   );
 }

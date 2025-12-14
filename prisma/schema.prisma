@@ -1,5 +1,5 @@
 // Life Ops Dashboard - Prisma Schema
-// Domain entities for ADHD-optimized task management
+// Domain entities for operational task management
 
 generator client {
   provider = "prisma-client-js"
@@ -38,6 +38,43 @@ model CaptureItem {
 }
 
 // ============================================
+// DOMAIN AREA - User-managed categories
+// ============================================
+
+model DomainArea {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+
+  tasks     Task[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive])
+  @@index([sortOrder])
+}
+
+// ============================================
+// PROJECT - User-managed projects
+// ============================================
+
+model Project {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  isActive    Boolean  @default(true)
+
+  tasks       Task[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([isActive])
+}
+
+// ============================================
 // TASK - Clarified and actionable items
 // ============================================
 
@@ -53,21 +90,21 @@ enum TaskStatus {
   ABANDONED     // Explicitly abandoned with reason
 }
 
-enum DomainArea {
-  WORK
-  PERSONAL
-  HEALTH
-  LEARNING
-  ADMIN
-  CREATIVE
-  SOCIAL
-  OTHER
+enum PriorityBucket {
+  NOW
+  NEXT
+  LATER
+}
+
+enum EnergyLevel {
+  HIGH
+  MEDIUM
+  LOW
 }
 
 model Task {
   id                  String      @id @default(cuid())
   title               String
-  domainArea          DomainArea?
   status              TaskStatus  @default(DRAFT)
 
   // Definition of Done (1-3 bullets)
@@ -79,13 +116,36 @@ model Task {
   // Duration estimate in minutes
   durationMinutes     Int?
 
+  // Priority management
+  priorityBucket      PriorityBucket?
+
+  // Scheduling
+  dueAt               DateTime?
+
+  // Planning metadata
+  energyFit           EnergyLevel?
+  urgency             Int?        // 1-5 scale
+  impact              Int?        // 1-5 scale
+  effort              Int?        // 1-5 scale
+
   // Optional metadata
   notes               String?
   tags                String[]    @default([])
+  contexts            String[]    @default([])
 
   // Relationships
+  domainAreaId        String?
+  domainArea          DomainArea?  @relation(fields: [domainAreaId], references: [id])
+
+  projectId           String?
+  project             Project?     @relation(fields: [projectId], references: [id])
+
   originCaptureItemId String?
   originCaptureItem   CaptureItem? @relation(fields: [originCaptureItemId], references: [id])
+
+  followOnOfTaskId    String?      // For v1 done + follow-on flow
+  followOnOf          Task?        @relation("FollowOnTasks", fields: [followOnOfTaskId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  followOnTasks       Task[]       @relation("FollowOnTasks")
 
   timeBlocks          TimeBlock[]
   shippedOutputs      ShippedOutput[]
@@ -96,7 +156,10 @@ model Task {
   updatedAt           DateTime    @updatedAt
 
   @@index([status])
-  @@index([domainArea])
+  @@index([domainAreaId])
+  @@index([projectId])
+  @@index([priorityBucket])
+  @@index([dueAt])
   @@index([createdAt])
 }
 
@@ -108,10 +171,14 @@ model TimeBlock {
   id              String    @id @default(cuid())
   date            DateTime  // Which day
   startTime       DateTime  // Actual start time
-  timeboxMinutes  Int       // 25, 45, 60, or 90
+  timeboxMinutes  Int       // 25, 45, 60, 90, or custom
 
   // Ordering within the day
   ordering        Int       @default(0)
+
+  // Completion tracking
+  completed       Boolean   @default(false)
+  abandonReason   String?   // If abandoned without ship output
 
   // Relationships
   taskId          String?
@@ -132,11 +199,16 @@ model TimeBlock {
 // ============================================
 
 enum OutputType {
+  DRAFT_CREATED
+  FILE_SAVED
+  SCREENSHOT
+  MESSAGE_SENT
+  COMMIT_MADE
+  ORDER_PLACED
+  DECISION_RECORDED
   CODE_PR
   DOCUMENT
-  DECISION
   COMMUNICATION
-  PROTOTYPE
   NOTE
   OTHER
 }
