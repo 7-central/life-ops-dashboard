@@ -208,7 +208,7 @@ export function FocusSession({ timeblock }: FocusSessionProps) {
           <div className="bg-gray-800 rounded-lg p-6 max-w-md w-full">
             <h3 className="text-xl font-semibold mb-4">Exit Focus Mode?</h3>
             <p className="text-gray-300 mb-6">
-              You're currently in a focus session. Are you sure you want to exit?
+              You&apos;re currently in a focus session. Are you sure you want to exit?
             </p>
             <div className="flex gap-3">
               <button

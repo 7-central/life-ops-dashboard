@@ -39,7 +39,7 @@ export default async function SettingsPage() {
             <li>
               <strong>Projects</strong> - Optional groupings for related tasks
             </li>
-            <li>Archive items you don't need anymore instead of deleting them</li>
+            <li>Archive items you don&apos;t need anymore instead of deleting them</li>
             <li>You can only delete domain areas/projects that have no associated tasks</li>
           </ul>
         </div>

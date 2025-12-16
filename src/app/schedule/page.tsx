@@ -29,7 +29,7 @@ export default async function SchedulePage() {
           <Link href="/" className="text-blue-600 hover:underline mb-4 inline-block">
             ← Back to Dashboard
           </Link>
-          <h1 className="text-4xl font-bold mb-2">Today's Schedule</h1>
+          <h1 className="text-4xl font-bold mb-2">Today&apos;s Schedule</h1>
           <p className="text-gray-600 dark:text-gray-400">
             {today.toLocaleDateString('en-US', {
               weekday: 'long',

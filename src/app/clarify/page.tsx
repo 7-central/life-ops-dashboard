@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { captureRepository } from '@/data/repositories/capture-repository';
 import { domainAreaRepository } from '@/data/repositories/domain-area-repository';
 import { projectRepository } from '@/data/repositories/project-repository';
@@ -14,9 +15,9 @@ export default async function ClarifyPage() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="max-w-4xl mx-auto p-8">
         <div className="mb-8">
-          <a href="/" className="text-blue-600 hover:underline mb-4 inline-block">
+          <Link href="/" className="text-blue-600 hover:underline mb-4 inline-block">
             ← Back to Dashboard
-          </a>
+          </Link>
           <h1 className="text-4xl font-bold mb-2">Clarify Queue</h1>
           <p className="text-gray-600 dark:text-gray-400">
             Process your unprocessed captures into actionable tasks
@@ -28,12 +29,12 @@ export default async function ClarifyPage() {
             <p className="text-gray-600 dark:text-gray-400 mb-4">
               No items to clarify! Your queue is empty.
             </p>
-            <a
+            <Link
               href="/upload"
               className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
             >
               Upload New Ideas
-            </a>
+            </Link>
           </div>
         ) : (
           <>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
+import Link from 'next/link';
 import { uploadIdeas } from './actions';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -36,9 +37,9 @@ export default function UploadPage() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="max-w-4xl mx-auto p-8">
         <div className="mb-8">
-          <a href="/" className="text-blue-600 hover:underline mb-4 inline-block">
+          <Link href="/" className="text-blue-600 hover:underline mb-4 inline-block">
             ← Back to Dashboard
-          </a>
+          </Link>
           <h1 className="text-4xl font-bold mb-2">Upload Ideas</h1>
           <p className="text-gray-600 dark:text-gray-400">
             Capture your thoughts quickly. One line = one idea.

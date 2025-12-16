@@ -27,7 +27,7 @@ export class OpenAIProvider implements AIProviderInterface {
     return false;
   }
 
-  async scoreTaskPriority(task: TaskForAI): Promise<PriorityScore> {
+  async scoreTaskPriority(_task: TaskForAI): Promise<PriorityScore> {
     // TODO: Implement OpenAI task scoring
     // When implementing:
     // 1. Install openai package: npm install openai
@@ -39,14 +39,8 @@ export class OpenAIProvider implements AIProviderInterface {
     throw new Error('OpenAI provider not yet implemented. Please use Anthropic provider.');
   }
 
-  async scoreBulkPriority(tasks: TaskForAI[]): Promise<BulkPrioritizationResult> {
+  async scoreBulkPriority(_tasks: TaskForAI[]): Promise<BulkPrioritizationResult> {
     // TODO: Implement OpenAI bulk scoring
     throw new Error('OpenAI provider not yet implemented. Please use Anthropic provider.');
-  }
-
-  // Helper method for building prompts (to be used when implementing)
-  private buildPrompt(task: TaskForAI): string {
-    // Similar to Anthropic provider's prompt building logic
-    return '';
   }
 }
