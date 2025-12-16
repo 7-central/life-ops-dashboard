@@ -36,13 +36,17 @@ function createProvider(config: AIServiceConfig): AIProviderInterface {
   switch (config.provider) {
     case 'anthropic':
       if (!config.anthropicApiKey) {
-        throw new Error('ANTHROPIC_API_KEY environment variable is required');
+        throw new Error(
+          'ANTHROPIC_API_KEY environment variable is required. Please add it to your Vercel environment variables in Settings → Environment Variables.'
+        );
       }
       return new AnthropicProvider(config.anthropicApiKey);
 
     case 'openai':
       if (!config.openaiApiKey) {
-        throw new Error('OPENAI_API_KEY environment variable is required');
+        throw new Error(
+          'OPENAI_API_KEY environment variable is required. Please add it to your Vercel environment variables in Settings → Environment Variables.'
+        );
       }
       return new OpenAIProvider(config.openaiApiKey);
 
@@ -57,12 +61,11 @@ function createProvider(config: AIServiceConfig): AIProviderInterface {
  */
 class AIService {
   private static instance: AIService;
-  private provider: AIProviderInterface;
-  private config: AIServiceConfig;
+  private provider: AIProviderInterface | null = null;
+  private config: AIServiceConfig | null = null;
 
   private constructor() {
-    this.config = getAIConfig();
-    this.provider = createProvider(this.config);
+    // Lazy initialization - don't create provider until first use
   }
 
   /**
@@ -76,31 +79,45 @@ class AIService {
   }
 
   /**
+   * Initialize the provider (lazy initialization)
+   */
+  private ensureProvider(): void {
+    if (!this.provider) {
+      this.config = getAIConfig();
+      this.provider = createProvider(this.config);
+    }
+  }
+
+  /**
    * Get current provider name
    */
   getProviderName(): AIProvider {
-    return this.config.provider;
+    this.ensureProvider();
+    return this.config!.provider;
   }
 
   /**
    * Test connection to AI provider
    */
   async testConnection(): Promise<boolean> {
-    return this.provider.testConnection();
+    this.ensureProvider();
+    return this.provider!.testConnection();
   }
 
   /**
    * Score a single task's priority
    */
   async scoreTaskPriority(task: TaskForAI): Promise<PriorityScore> {
-    return this.provider.scoreTaskPriority(task);
+    this.ensureProvider();
+    return this.provider!.scoreTaskPriority(task);
   }
 
   /**
    * Score multiple tasks and get distribution recommendations
    */
   async scoreBulkPriority(tasks: TaskForAI[]): Promise<BulkPrioritizationResult> {
-    return this.provider.scoreBulkPriority(tasks);
+    this.ensureProvider();
+    return this.provider!.scoreBulkPriority(tasks);
   }
 
   /**
@@ -108,7 +125,7 @@ class AIService {
    */
   switchProvider(provider: AIProvider, apiKey: string): void {
     this.config = {
-      ...this.config,
+      ...this.config!,
       provider,
       ...(provider === 'anthropic' ? { anthropicApiKey: apiKey } : { openaiApiKey: apiKey }),
     };
