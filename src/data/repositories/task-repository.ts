@@ -1,5 +1,5 @@
 import { prisma } from '../prisma';
-import type { TaskStatus, PriorityBucket, EnergyLevel } from '@prisma/client';
+import type { TaskStatus, PriorityBucket, EnergyLevel } from '@/generated/prisma';
 
 export interface CreateTaskData {
   title: string;

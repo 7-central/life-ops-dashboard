@@ -11,7 +11,7 @@ import {
   unarchiveProject,
   deleteProject,
 } from '@/app/settings/actions';
-import type { Project } from '@prisma/client';
+import type { Project } from '@/generated/prisma';
 
 interface ProjectManagerProps {
   projects: (Project & { _count?: { tasks: number } })[];

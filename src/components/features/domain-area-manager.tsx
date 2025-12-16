@@ -10,7 +10,7 @@ import {
   unarchiveDomainArea,
   deleteDomainArea,
 } from '@/app/settings/actions';
-import type { DomainArea } from '@prisma/client';
+import type { DomainArea } from '@/generated/prisma';
 
 interface DomainAreaManagerProps {
   domainAreas: (DomainArea & { _count?: { tasks: number } })[];

@@ -1,4 +1,4 @@
-import type { Task, TaskStatus } from './types';
+import type { TaskStatus } from './types';
 
 /**
  * Business rules for Tasks

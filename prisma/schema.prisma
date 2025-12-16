@@ -169,20 +169,15 @@ model Task {
 
 model TimeBlock {
   id              String    @id @default(cuid())
-  date            DateTime  // Which day
-  startTime       DateTime  // Actual start time
-  timeboxMinutes  Int       // 25, 45, 60, 90, or custom
-
-  // Ordering within the day
-  ordering        Int       @default(0)
+  taskId          String
+  task            Task      @relation(fields: [taskId], references: [id])
+  scheduledFor    DateTime  // When this block starts
+  durationMinutes Int       // 25, 45, 60, or 90 minutes
 
   // Completion tracking
   completed       Boolean   @default(false)
-  abandonReason   String?   // If abandoned without ship output
-
-  // Relationships
-  taskId          String?
-  task            Task?     @relation(fields: [taskId], references: [id])
+  actualMinutes   Int?      // How long it actually took
+  abandonReason   String?   // If abandoned without completion
 
   shippedOutputs  ShippedOutput[]
   auditEvents     AuditEvent[]
@@ -190,7 +185,7 @@ model TimeBlock {
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
-  @@index([date])
+  @@index([scheduledFor])
   @@index([taskId])
 }
 

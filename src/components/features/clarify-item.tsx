@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { createTaskFromCapture, parkCaptureItem, deleteCaptureItem } from '@/app/clarify/actions';
-import type { CaptureItem, DomainArea, Project } from '@prisma/client';
+import type { CaptureItem, DomainArea, Project } from '@/generated/prisma';
 
 interface ClarifyItemProps {
   capture: CaptureItem;

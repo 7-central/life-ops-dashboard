@@ -1,5 +1,7 @@
 import { captureRepository } from '@/data/repositories/capture-repository';
 import { taskRepository } from '@/data/repositories/task-repository';
+import { PriorityBoard } from '@/components/features/priority-board';
+import { AIPriorityAssistant } from '@/components/features/ai-priority-assistant';
 import Link from 'next/link';
 
 export default async function DashboardPage() {
@@ -72,98 +74,14 @@ export default async function DashboardPage() {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              {/* READY Column */}
-              <div>
-                <div className="bg-gray-100 dark:bg-gray-700 p-3 rounded-lg mb-2">
-                  <h3 className="font-semibold">READY</h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">{readyTasks.length} tasks</p>
-                </div>
-                <div className="space-y-2 max-h-64 overflow-y-auto">
-                  {readyTasks.map((task) => (
-                    <div
-                      key={task.id}
-                      className="p-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded text-sm"
-                    >
-                      <div className="font-medium truncate">{task.title}</div>
-                      <div className="text-xs text-gray-500">{task.domainArea?.name}</div>
-                    </div>
-                  ))}
-                  {readyTasks.length === 0 && (
-                    <p className="text-sm text-gray-500 italic">No ready tasks</p>
-                  )}
-                </div>
-              </div>
+            <AIPriorityAssistant hasReadyTasks={readyTasks.length > 0} />
 
-              {/* NOW Column */}
-              <div>
-                <div className="bg-red-100 dark:bg-red-900/30 p-3 rounded-lg mb-2">
-                  <h3 className="font-semibold">NOW</h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">max 1</p>
-                </div>
-                <div className="space-y-2">
-                  {nowTasks.map((task) => (
-                    <div
-                      key={task.id}
-                      className="p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded text-sm"
-                    >
-                      <div className="font-medium truncate">{task.title}</div>
-                      <div className="text-xs text-gray-500">{task.domainArea?.name}</div>
-                    </div>
-                  ))}
-                  {nowTasks.length === 0 && (
-                    <p className="text-sm text-gray-500 italic">Empty</p>
-                  )}
-                </div>
-              </div>
-
-              {/* NEXT Column */}
-              <div>
-                <div className="bg-yellow-100 dark:bg-yellow-900/30 p-3 rounded-lg mb-2">
-                  <h3 className="font-semibold">NEXT</h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">max 3</p>
-                </div>
-                <div className="space-y-2">
-                  {nextTasks.map((task) => (
-                    <div
-                      key={task.id}
-                      className="p-2 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded text-sm"
-                    >
-                      <div className="font-medium truncate">{task.title}</div>
-                      <div className="text-xs text-gray-500">{task.domainArea?.name}</div>
-                    </div>
-                  ))}
-                  {nextTasks.length === 0 && (
-                    <p className="text-sm text-gray-500 italic">Empty</p>
-                  )}
-                </div>
-              </div>
-
-              {/* LATER Column */}
-              <div>
-                <div className="bg-blue-100 dark:bg-blue-900/30 p-3 rounded-lg mb-2">
-                  <h3 className="font-semibold">LATER</h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">{laterTasks.length} tasks</p>
-                </div>
-                <div className="space-y-2 max-h-64 overflow-y-auto">
-                  {laterTasks.slice(0, 5).map((task) => (
-                    <div
-                      key={task.id}
-                      className="p-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded text-sm"
-                    >
-                      <div className="font-medium truncate">{task.title}</div>
-                      <div className="text-xs text-gray-500">{task.domainArea?.name}</div>
-                    </div>
-                  ))}
-                  {laterTasks.length > 5 && (
-                    <p className="text-xs text-gray-500 italic">+{laterTasks.length - 5} more</p>
-                  )}
-                  {laterTasks.length === 0 && (
-                    <p className="text-sm text-gray-500 italic">Empty</p>
-                  )}
-                </div>
-              </div>
-            </div>
+            <PriorityBoard
+              readyTasks={readyTasks}
+              nowTasks={nowTasks}
+              nextTasks={nextTasks}
+              laterTasks={laterTasks}
+            />
 
             <div className="mt-4">
               <Link href="/tasks">

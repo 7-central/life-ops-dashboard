@@ -1,5 +1,5 @@
 import { prisma } from '../prisma';
-import type { CaptureStatus } from '@prisma/client';
+import type { CaptureStatus } from '@/generated/prisma';
 
 export interface CreateCaptureItemData {
   rawText: string;

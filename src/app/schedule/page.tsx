@@ -1,6 +1,27 @@
+import { timeboxRepository } from '@/data/repositories/timebox-repository';
+import { taskRepository } from '@/data/repositories/task-repository';
+import { ScheduleTimeline } from '@/components/features/schedule-timeline';
 import Link from 'next/link';
 
 export default async function SchedulePage() {
+  const today = new Date();
+  const [allTimeblocks, nowTasks, nextTasks] = await Promise.all([
+    timeboxRepository.getForDate(today),
+    taskRepository.getByStatus('NOW'),
+    taskRepository.getByStatus('NEXT'),
+  ]);
+
+  // Filter out completed and abandoned timeblocks
+  const timeblocks = allTimeblocks.filter(
+    (tb) => !tb.completed && !tb.abandonReason
+  );
+
+  // Get tasks that are schedulable (NOW/NEXT but not already scheduled)
+  const scheduledTaskIds = timeblocks.map((tb) => tb.taskId);
+  const availableTasks = [...nowTasks, ...nextTasks].filter(
+    (task) => !scheduledTaskIds.includes(task.id)
+  );
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="max-w-7xl mx-auto p-8">
@@ -8,41 +29,37 @@ export default async function SchedulePage() {
           <Link href="/" className="text-blue-600 hover:underline mb-4 inline-block">
             ← Back to Dashboard
           </Link>
-          <h1 className="text-4xl font-bold mb-2">Schedule</h1>
+          <h1 className="text-4xl font-bold mb-2">Today's Schedule</h1>
           <p className="text-gray-600 dark:text-gray-400">
-            Plan your day with timeboxed execution blocks
+            {today.toLocaleDateString('en-US', {
+              weekday: 'long',
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+            })}
           </p>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-md">
-          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-6 text-center">
-            <h2 className="text-lg font-semibold mb-2">Timeline View Coming Soon</h2>
-            <p className="text-gray-700 dark:text-gray-300 mb-4">
-              The schedule page will let you:
-            </p>
-            <ul className="text-left max-w-md mx-auto space-y-2 mb-4">
-              <li className="flex items-start">
-                <span className="mr-2">•</span>
-                <span>Create timeboxes (25/45/60/90 minutes)</span>
-              </li>
-              <li className="flex items-start">
-                <span className="mr-2">•</span>
-                <span>Assign tasks to specific time slots</span>
-              </li>
-              <li className="flex items-start">
-                <span className="mr-2">•</span>
-                <span>Drag and drop to reorder</span>
-              </li>
-              <li className="flex items-start">
-                <span className="mr-2">•</span>
-                <span>Start focus mode from any block</span>
-              </li>
-            </ul>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              This feature will be available in the next milestone.
-            </p>
+        {/* Summary Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-md">
+            <div className="text-sm text-gray-600 dark:text-gray-400">Timeblocks</div>
+            <div className="text-3xl font-bold">{timeblocks.length}</div>
+          </div>
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-md">
+            <div className="text-sm text-gray-600 dark:text-gray-400">Total Time</div>
+            <div className="text-3xl font-bold">
+              {timeblocks.reduce((sum, tb) => sum + tb.durationMinutes, 0)} min
+            </div>
+          </div>
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-md">
+            <div className="text-sm text-gray-600 dark:text-gray-400">Available Tasks</div>
+            <div className="text-3xl font-bold">{availableTasks.length}</div>
           </div>
         </div>
+
+        {/* Timeline */}
+        <ScheduleTimeline timeblocks={timeblocks} availableTasks={availableTasks} />
       </div>
     </div>
   );
