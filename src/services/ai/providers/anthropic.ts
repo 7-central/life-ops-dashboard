@@ -10,9 +10,106 @@ import type {
   BulkPrioritizationResult,
 } from '../types';
 
+// JSON Schema for single task priority score
+const PRIORITY_SCORE_SCHEMA = {
+  type: 'object',
+  properties: {
+    score: {
+      type: 'number',
+      description: 'Priority score from 0-100',
+    },
+    suggestedBucket: {
+      type: 'string',
+      enum: ['NOW', 'NEXT', 'LATER'],
+      description: 'Recommended priority bucket',
+    },
+    reasoning: {
+      type: 'string',
+      description: '1-2 sentence explanation of the score',
+    },
+    confidence: {
+      type: 'number',
+      description: 'Confidence level from 0-1',
+    },
+    factors: {
+      type: 'object',
+      properties: {
+        urgencyScore: { type: 'number' },
+        impactScore: { type: 'number' },
+        effortScore: { type: 'number' },
+        deadlineProximity: { type: ['number', 'null'] },
+        energyAlignment: { type: ['number', 'null'] },
+      },
+      required: ['urgencyScore', 'impactScore', 'effortScore'],
+    },
+  },
+  required: ['score', 'suggestedBucket', 'reasoning', 'confidence', 'factors'],
+} as const;
+
+// JSON Schema for bulk prioritization result
+const BULK_PRIORITY_SCHEMA = {
+  type: 'object',
+  properties: {
+    scores: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          taskId: { type: 'string' },
+          score: { type: 'number' },
+          suggestedBucket: {
+            type: 'string',
+            enum: ['NOW', 'NEXT', 'LATER'],
+          },
+          reasoning: { type: 'string' },
+          confidence: { type: 'number' },
+          factors: {
+            type: 'object',
+            properties: {
+              urgencyScore: { type: 'number' },
+              impactScore: { type: 'number' },
+              effortScore: { type: 'number' },
+              deadlineProximity: { type: ['number', 'null'] },
+              energyAlignment: { type: ['number', 'null'] },
+            },
+            required: ['urgencyScore', 'impactScore', 'effortScore'],
+          },
+        },
+        required: ['taskId', 'score', 'suggestedBucket', 'reasoning', 'confidence', 'factors'],
+      },
+    },
+    recommendations: {
+      type: 'object',
+      properties: {
+        now: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Task IDs for NOW bucket (max 1)',
+        },
+        next: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Task IDs for NEXT bucket (max 3)',
+        },
+        later: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Task IDs for LATER bucket',
+        },
+      },
+      required: ['now', 'next', 'later'],
+    },
+    summary: {
+      type: 'string',
+      description: '2-3 sentence explanation of prioritization strategy',
+    },
+  },
+  required: ['scores', 'recommendations', 'summary'],
+} as const;
+
 export class AnthropicProvider implements AIProviderInterface {
   private client: Anthropic;
-  private model: string = 'claude-3-5-sonnet-20241022';
+  private model: string = 'claude-haiku-4-5';
 
   constructor(apiKey: string) {
     this.client = new Anthropic({
@@ -22,11 +119,12 @@ export class AnthropicProvider implements AIProviderInterface {
 
   async testConnection(): Promise<boolean> {
     try {
-      const response = await this.client.messages.create({
+      const response = await this.client.beta.messages.create({
         model: this.model,
         max_tokens: 10,
+        betas: ['structured-outputs-2025-11-13'],
         messages: [{ role: 'user', content: 'test' }],
-      });
+      } as any);
       return response.content.length > 0;
     } catch (error) {
       console.error('Anthropic connection test failed:', error);
@@ -38,16 +136,21 @@ export class AnthropicProvider implements AIProviderInterface {
     const prompt = this.buildSingleTaskPrompt(task);
 
     try {
-      const response = await this.client.messages.create({
+      const response = await this.client.beta.messages.create({
         model: this.model,
         max_tokens: 1024,
+        betas: ['structured-outputs-2025-11-13'],
         messages: [
           {
             role: 'user',
             content: prompt,
           },
         ],
-      });
+        output_format: {
+          type: 'json_schema',
+          schema: PRIORITY_SCORE_SCHEMA,
+        },
+      } as any); // Type assertion needed for beta feature
 
       const content = response.content[0];
       if (content.type !== 'text') {
@@ -73,16 +176,21 @@ export class AnthropicProvider implements AIProviderInterface {
     const prompt = this.buildBulkTaskPrompt(tasks);
 
     try {
-      const response = await this.client.messages.create({
+      const response = await this.client.beta.messages.create({
         model: this.model,
         max_tokens: 4096,
+        betas: ['structured-outputs-2025-11-13'],
         messages: [
           {
             role: 'user',
             content: prompt,
           },
         ],
-      });
+        output_format: {
+          type: 'json_schema',
+          schema: BULK_PRIORITY_SCHEMA,
+        },
+      } as any); // Type assertion needed for beta feature
 
       const content = response.content[0];
       if (content.type !== 'text') {
@@ -143,8 +251,7 @@ Consider:
 4. Deadline: Is there a due date approaching?
 5. Clarity: Are the DoD and next action well-defined?
 
-Calculate score using: (urgency × impact) / effort, adjusted for deadlines and clarity.
-Return ONLY valid JSON, no additional text.`;
+Calculate score using: (urgency × impact) / effort, adjusted for deadlines and clarity.`;
   }
 
   private buildBulkTaskPrompt(tasks: TaskForAI[]): string {
@@ -205,8 +312,6 @@ Prioritization Rules:
 2. Select up to 3 high-priority tasks for NEXT
 3. Place remaining tasks in LATER
 4. Consider: urgency, impact, effort, deadlines, and dependencies
-5. Balance quick wins with high-impact work
-
-Return ONLY valid JSON, no additional text.`;
+5. Balance quick wins with high-impact work`;
   }
 }
