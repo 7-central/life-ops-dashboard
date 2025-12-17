@@ -323,10 +323,13 @@ Task ${idx + 1}:
 
     return `You are a task prioritization expert. Analyze these ${tasks.length} tasks and recommend how to distribute them across priority buckets.
 
+IMPORTANT: You are receiving ALL tasks from all priority buckets (NOW, NEXT, LATER, and READY).
+Your job is to REDISTRIBUTE all of them according to the prioritization rules below.
+
 ${taskList}
 
 Priority Buckets:
-- NOW: Maximum 1 task (what to work on right now)
+- NOW: EXACTLY 1 task (what to work on right now)
 - NEXT: Maximum 3 tasks (what's coming up)
 - LATER: Unlimited (backlog)
 
@@ -356,11 +359,12 @@ Return a JSON object with this exact structure:
   "summary": "<2-3 sentence explanation of the prioritization strategy>"
 }
 
-Prioritization Rules:
-1. Identify the SINGLE most critical task for NOW
-2. Select up to 3 high-priority tasks for NEXT
-3. Place remaining tasks in LATER
-4. Consider: urgency, impact, effort, deadlines, and dependencies
-5. Balance quick wins with high-impact work`;
+CRITICAL Prioritization Rules:
+1. Identify the SINGLE most critical task for NOW (exactly 1, no more, no less)
+2. Select up to 3 high-priority tasks for NEXT (maximum 3)
+3. Place ALL remaining tasks in LATER
+4. EVERY task ID must appear in exactly one bucket (now, next, or later)
+5. Consider: urgency, impact, effort, deadlines, and dependencies
+6. Balance quick wins with high-impact work`;
   }
 }

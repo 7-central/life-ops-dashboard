@@ -76,24 +76,32 @@ export async function scoreTaskWithAI(taskId: string): Promise<AIActionResult> {
 }
 
 /**
- * Score all READY tasks and get prioritization recommendations
+ * Score all active tasks (READY, NOW, NEXT, LATER) and get prioritization recommendations
  */
 export async function scoreReadyTasksWithAI(): Promise<AIActionResult> {
   try {
-    // Get all READY tasks
-    const readyTasks = await taskRepository.getReady();
+    // Get all active tasks from all priority buckets
+    const [readyTasks, nowTasks, nextTasks, laterTasks] = await Promise.all([
+      taskRepository.getReady(),
+      taskRepository.getNow(),
+      taskRepository.getNext(),
+      taskRepository.getLater(),
+    ]);
 
-    if (readyTasks.length === 0) {
+    // Combine all tasks
+    const allTasks = [...readyTasks, ...nowTasks, ...nextTasks, ...laterTasks];
+
+    if (allTasks.length === 0) {
       return {
         success: false,
-        error: 'No READY tasks to score',
+        error: 'No tasks to score',
       };
     }
 
     // Convert to AI format
-    const tasksForAI = readyTasks.map(taskToAIFormat);
+    const tasksForAI = allTasks.map(taskToAIFormat);
 
-    // Score with AI
+    // Score with AI - passing all tasks so it can properly redistribute
     const result = await aiService.scoreBulkPriority(tasksForAI);
 
     return {
@@ -111,12 +119,27 @@ export async function scoreReadyTasksWithAI(): Promise<AIActionResult> {
 
 /**
  * Apply AI recommendations to tasks
- * Moves tasks to suggested priority buckets
+ * Redistributes ALL tasks to their recommended priority buckets
  */
 export async function applyAIRecommendations(
   recommendations: BulkPrioritizationResult['recommendations']
 ): Promise<AIActionResult> {
   try {
+    // Get all current tasks that might need to be moved
+    const [currentNow, currentNext] = await Promise.all([
+      taskRepository.getNow(),
+      taskRepository.getNext(),
+    ]);
+
+    // Create sets of task IDs for efficient lookup
+    const recommendedNowIds = new Set(recommendations.now);
+    const recommendedNextIds = new Set(recommendations.next);
+    const allRecommendedIds = new Set([
+      ...recommendations.now,
+      ...recommendations.next,
+      ...recommendations.later,
+    ]);
+
     // Move tasks to NOW
     for (const taskId of recommendations.now) {
       await taskRepository.update(taskId, {
@@ -139,6 +162,36 @@ export async function applyAIRecommendations(
         status: 'LATER',
         priorityBucket: 'LATER',
       });
+    }
+
+    // Move tasks that are currently in NOW but not recommended for NOW back to LATER
+    for (const task of currentNow) {
+      if (!recommendedNowIds.has(task.id) && allRecommendedIds.has(task.id)) {
+        // Task is in recommendations but in a different bucket - already handled above
+        continue;
+      }
+      if (!allRecommendedIds.has(task.id)) {
+        // Task is not in any recommendations - shouldn't happen but move to LATER as safeguard
+        await taskRepository.update(task.id, {
+          status: 'LATER',
+          priorityBucket: 'LATER',
+        });
+      }
+    }
+
+    // Move tasks that are currently in NEXT but not recommended for NEXT
+    for (const task of currentNext) {
+      if (!recommendedNextIds.has(task.id) && allRecommendedIds.has(task.id)) {
+        // Already handled above
+        continue;
+      }
+      if (!allRecommendedIds.has(task.id)) {
+        // Move to LATER as safeguard
+        await taskRepository.update(task.id, {
+          status: 'LATER',
+          priorityBucket: 'LATER',
+        });
+      }
     }
 
     revalidatePath('/');

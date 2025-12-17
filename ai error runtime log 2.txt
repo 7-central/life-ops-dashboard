@@ -1,0 +1,46 @@
+2025-12-17 13:26:15.426 [info] AI Request - Model: claude-haiku-4-5
+2025-12-17 13:26:15.426 [info] AI Request - Task count: 5
+2025-12-17 13:26:15.426 [info] AI Request - Using beta API with structured outputs
+2025-12-17 13:26:15.501 [error] Error scoring bulk priorities with Anthropic:
+2025-12-17 13:26:15.501 [error] Error type: aE
+2025-12-17 13:26:15.501 [error] Error message: 400 {"type":"error","error":{"type":"invalid_request_error","message":"output_format.schema: For 'object' type, 'additionalProperties' must be explicitly set to false"},"request_id":"req_011CWCLQNg2LUFLnAHdh3KPx"}
+2025-12-17 13:26:15.501 [error] API Status: 400
+2025-12-17 13:26:15.501 [error] API Error: {
+  "type": "error",
+  "error": {
+    "type": "invalid_request_error",
+    "message": "output_format.schema: For 'object' type, 'additionalProperties' must be explicitly set to false"
+  },
+  "request_id": "req_011CWCLQNg2LUFLnAHdh3KPx"
+}
+2025-12-17 13:26:15.504 [error] Full error: Error: 400 {"type":"error","error":{"type":"invalid_request_error","message":"output_format.schema: For 'object' type, 'additionalProperties' must be explicitly set to false"},"request_id":"req_011CWCLQNg2LUFLnAHdh3KPx"}
+    at aA.generate (.next/server/app/page.js:2:11814)
+    at b5.makeStatusError (.next/server/app/page.js:29:4601)
+    at b5.makeRequest (.next/server/app/page.js:29:7856)
+    at async b8.scoreBulkPriority (.next/server/app/page.js:29:17948)
+    at async cg (.next/server/app/page.js:125:2676) {
+  status: 400,
+  headers: Headers {
+    date: 'Wed, 17 Dec 2025 13:26:15 GMT',
+    'content-type': 'application/json',
+    'content-length': '209',
+    connection: 'keep-alive',
+    'cf-cache-status': 'DYNAMIC',
+    server: 'cloudflare',
+    'strict-transport-security': 'max-age=31536000; includeSubDomains; preload',
+    'x-robots-tag': 'none',
+    'anthropic-organization-id': 'e0a71a7b-9b76-4f5c-8c9a-821161f1ecf1',
+    'request-id': 'req_011CWCLQNg2LUFLnAHdh3KPx',
+    'x-envoy-upstream-service-time': '33',
+    'x-should-retry': 'false',
+    vary: 'accept-encoding',
+    'cf-ray': '9af6c04a8f517ed1-IAD'
+  },
+  requestID: 'req_011CWCLQNg2LUFLnAHdh3KPx',
+  error: [Object]
+}
+2025-12-17 13:26:15.506 [error] Error scoring tasks with AI: Error: Failed to score bulk priorities: 400 {"type":"error","error":{"type":"invalid_request_error","message":"output_format.schema: For 'object' type, 'additionalProperties' must be explicitly set to false"},"request_id":"req_011CWCLQNg2LUFLnAHdh3KPx"}
+    at b8.scoreBulkPriority (.next/server/app/page.js:29:18949)
+    at async cg (.next/server/app/page.js:125:2676)
+    at async m (.next/server/app/page.js:1:10291)
+    at async p (.next/server/app/page.js:2:1860)
