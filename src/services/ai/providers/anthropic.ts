@@ -171,14 +171,21 @@ export class AnthropicProvider implements AIProviderInterface {
         confidence: result.confidence,
         factors: result.factors,
       };
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error scoring task priority with Anthropic:');
-      console.error('Error type:', error?.constructor?.name);
-      console.error('Error message:', error?.message);
-      if (error instanceof Error && 'status' in error) {
-        console.error('API Status:', (error as any).status);
-        console.error('API Error:', JSON.stringify((error as any).error, null, 2));
+      if (error && typeof error === 'object') {
+        console.error('Error type:', error.constructor?.name);
+        if ('message' in error) {
+          console.error('Error message:', error.message);
+        }
+        if ('status' in error) {
+          console.error('API Status:', (error as any).status);
+        }
+        if ('error' in error) {
+          console.error('API Error:', JSON.stringify((error as any).error, null, 2));
+        }
       }
+      console.error('Full error:', error);
       throw new Error(`Failed to score task priority: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
@@ -222,13 +229,19 @@ export class AnthropicProvider implements AIProviderInterface {
         later: result.recommendations?.later?.length || 0,
       });
       return result;
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error scoring bulk priorities with Anthropic:');
-      console.error('Error type:', error?.constructor?.name);
-      console.error('Error message:', error?.message);
-      if (error instanceof Error && 'status' in error) {
-        console.error('API Status:', (error as any).status);
-        console.error('API Error:', JSON.stringify((error as any).error, null, 2));
+      if (error && typeof error === 'object') {
+        console.error('Error type:', error.constructor?.name);
+        if ('message' in error) {
+          console.error('Error message:', error.message);
+        }
+        if ('status' in error) {
+          console.error('API Status:', (error as any).status);
+        }
+        if ('error' in error) {
+          console.error('API Error:', JSON.stringify((error as any).error, null, 2));
+        }
       }
       console.error('Full error:', error);
       throw new Error(`Failed to score bulk priorities: ${error instanceof Error ? error.message : 'Unknown error'}`);
