@@ -41,9 +41,11 @@ const PRIORITY_SCORE_SCHEMA = {
         energyAlignment: { type: ['number', 'null'] },
       },
       required: ['urgencyScore', 'impactScore', 'effortScore'],
+      additionalProperties: false,
     },
   },
   required: ['score', 'suggestedBucket', 'reasoning', 'confidence', 'factors'],
+  additionalProperties: false,
 } as const;
 
 // JSON Schema for bulk prioritization result
@@ -73,9 +75,11 @@ const BULK_PRIORITY_SCHEMA = {
               energyAlignment: { type: ['number', 'null'] },
             },
             required: ['urgencyScore', 'impactScore', 'effortScore'],
+            additionalProperties: false,
           },
         },
         required: ['taskId', 'score', 'suggestedBucket', 'reasoning', 'confidence', 'factors'],
+        additionalProperties: false,
       },
     },
     recommendations: {
@@ -98,6 +102,7 @@ const BULK_PRIORITY_SCHEMA = {
         },
       },
       required: ['now', 'next', 'later'],
+      additionalProperties: false,
     },
     summary: {
       type: 'string',
@@ -105,6 +110,7 @@ const BULK_PRIORITY_SCHEMA = {
     },
   },
   required: ['scores', 'recommendations', 'summary'],
+  additionalProperties: false,
 } as const;
 
 export class AnthropicProvider implements AIProviderInterface {
