@@ -112,6 +112,11 @@ export class AnthropicProvider implements AIProviderInterface {
   private model: string = 'claude-haiku-4-5';
 
   constructor(apiKey: string) {
+    console.log('AnthropicProvider initialized');
+    console.log('API Key present:', !!apiKey);
+    console.log('API Key prefix:', apiKey ? apiKey.substring(0, 10) + '...' : 'MISSING');
+    console.log('Model:', this.model);
+
     this.client = new Anthropic({
       apiKey,
     });
@@ -167,8 +172,14 @@ export class AnthropicProvider implements AIProviderInterface {
         factors: result.factors,
       };
     } catch (error) {
-      console.error('Error scoring task priority with Anthropic:', error);
-      throw new Error('Failed to score task priority');
+      console.error('Error scoring task priority with Anthropic:');
+      console.error('Error type:', error?.constructor?.name);
+      console.error('Error message:', error?.message);
+      if (error instanceof Error && 'status' in error) {
+        console.error('API Status:', (error as any).status);
+        console.error('API Error:', JSON.stringify((error as any).error, null, 2));
+      }
+      throw new Error(`Failed to score task priority: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
@@ -176,6 +187,10 @@ export class AnthropicProvider implements AIProviderInterface {
     const prompt = this.buildBulkTaskPrompt(tasks);
 
     try {
+      console.log('AI Request - Model:', this.model);
+      console.log('AI Request - Task count:', tasks.length);
+      console.log('AI Request - Using beta API with structured outputs');
+
       const response = await this.client.beta.messages.create({
         model: this.model,
         max_tokens: 4096,
@@ -192,16 +207,31 @@ export class AnthropicProvider implements AIProviderInterface {
         },
       } as any); // Type assertion needed for beta feature
 
+      console.log('AI Response received - Stop reason:', response.stop_reason);
+      console.log('AI Response - Content type:', response.content[0]?.type);
+
       const content = response.content[0];
       if (content.type !== 'text') {
         throw new Error('Unexpected response type from Anthropic');
       }
 
       const result = JSON.parse(content.text);
+      console.log('AI Response parsed successfully - Recommendations:', {
+        now: result.recommendations?.now?.length || 0,
+        next: result.recommendations?.next?.length || 0,
+        later: result.recommendations?.later?.length || 0,
+      });
       return result;
     } catch (error) {
-      console.error('Error scoring bulk priorities with Anthropic:', error);
-      throw new Error('Failed to score bulk priorities');
+      console.error('Error scoring bulk priorities with Anthropic:');
+      console.error('Error type:', error?.constructor?.name);
+      console.error('Error message:', error?.message);
+      if (error instanceof Error && 'status' in error) {
+        console.error('API Status:', (error as any).status);
+        console.error('API Error:', JSON.stringify((error as any).error, null, 2));
+      }
+      console.error('Full error:', error);
+      throw new Error(`Failed to score bulk priorities: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
