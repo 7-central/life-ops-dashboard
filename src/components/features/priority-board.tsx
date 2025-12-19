@@ -1,12 +1,14 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import type { Task, DomainArea, Project } from '@/generated/prisma';
 import {
   moveTaskToNow,
   moveTaskToNext,
   moveTaskToLater,
   moveTaskToReady,
+  completeTask,
 } from '@/app/actions/task-actions';
 
 type TaskWithRelations = Task & {
@@ -71,6 +73,24 @@ export function PriorityBoard({ readyTasks, nowTasks, nextTasks, laterTasks }: P
     }
   }
 
+  async function handleCompleteTask(taskId: string) {
+    setMovingTaskId(taskId);
+    setError(null);
+
+    try {
+      // Force complete from dashboard (skip DoD check)
+      const result = await completeTask(taskId, true);
+      if (!result.success) {
+        setError(result.error || 'Failed to complete task');
+      }
+    } catch (err) {
+      setError('Failed to complete task');
+      console.error(err);
+    } finally {
+      setMovingTaskId(null);
+    }
+  }
+
   async function handleOverride() {
     if (!showOverrideConfirm) return;
 
@@ -108,9 +128,16 @@ export function PriorityBoard({ readyTasks, nowTasks, nextTasks, laterTasks }: P
 
     return (
       <div className="p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
-        <div className="font-medium mb-1 text-sm">{task.title}</div>
-        <div className="text-xs text-gray-500 mb-2">{task.domainArea?.name}</div>
+        {/* Clickable task content area */}
+        <Link
+          href={`/tasks/${task.id}`}
+          className="block mb-2 hover:opacity-80 transition-opacity"
+        >
+          <div className="font-medium mb-1 text-sm cursor-pointer">{task.title}</div>
+          <div className="text-xs text-gray-500">{task.domainArea?.name}</div>
+        </Link>
 
+        {/* Action buttons - separate from clickable area */}
         {showMoveButtons && (
           <div className="flex flex-wrap gap-1">
             {task.status !== 'NOW' && (
@@ -149,6 +176,13 @@ export function PriorityBoard({ readyTasks, nowTasks, nextTasks, laterTasks }: P
                 → READY
               </button>
             )}
+            <button
+              onClick={() => handleCompleteTask(task.id)}
+              disabled={isMoving}
+              className="text-xs px-2 py-1 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 rounded hover:bg-green-200 dark:hover:bg-green-900/50 disabled:opacity-50 transition"
+            >
+              ✓ Complete
+            </button>
           </div>
         )}
       </div>

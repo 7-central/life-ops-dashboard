@@ -2,15 +2,21 @@ import { captureRepository } from '@/data/repositories/capture-repository';
 import { taskRepository } from '@/data/repositories/task-repository';
 import { PriorityBoard } from '@/components/features/priority-board';
 import { AIPriorityAssistant } from '@/components/features/ai-priority-assistant';
+import { RecentlyCompleted } from '@/components/features/recently-completed';
+import { purgeOldCompletedTasks } from '@/app/actions/task-actions';
 import Link from 'next/link';
 
 export default async function DashboardPage() {
-  const [unprocessedCount, readyTasks, nowTasks, nextTasks, laterTasks] = await Promise.all([
+  // Auto-purge old completed tasks on dashboard load
+  await purgeOldCompletedTasks();
+
+  const [unprocessedCount, readyTasks, nowTasks, nextTasks, laterTasks, recentlyCompletedTasks] = await Promise.all([
     captureRepository.getUnprocessed().then((items) => items.length),
     taskRepository.getByStatus('READY'),
     taskRepository.getByStatus('NOW'),
     taskRepository.getByStatus('NEXT'),
     taskRepository.getByStatus('LATER'),
+    taskRepository.getRecentlyCompleted(),
   ]);
 
   const hasUnprocessed = unprocessedCount > 0;
@@ -93,6 +99,13 @@ export default async function DashboardPage() {
           </div>
         </section>
 
+        {/* Recently Completed Tasks */}
+        {recentlyCompletedTasks.length > 0 && (
+          <section className="mb-8">
+            <RecentlyCompleted tasks={recentlyCompletedTasks} />
+          </section>
+        )}
+
         {/* Step 3: Schedule */}
         <section className="mb-8">
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-md">
@@ -120,7 +133,7 @@ export default async function DashboardPage() {
         <section>
           <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-6">
             <h2 className="text-lg font-semibold mb-3">Quick Actions</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <Link href="/upload">
                 <div className="p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-blue-500 transition cursor-pointer">
                   <div className="text-2xl mb-2">📝</div>
@@ -136,6 +149,15 @@ export default async function DashboardPage() {
                   <div className="font-medium">View All Tasks</div>
                   <div className="text-sm text-gray-600 dark:text-gray-400">
                     Filter and manage tasks
+                  </div>
+                </div>
+              </Link>
+              <Link href="/profile">
+                <div className="p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-blue-500 transition cursor-pointer">
+                  <div className="text-2xl mb-2">👤</div>
+                  <div className="font-medium">Profile</div>
+                  <div className="text-sm text-gray-600 dark:text-gray-400">
+                    Goals & AI context
                   </div>
                 </div>
               </Link>

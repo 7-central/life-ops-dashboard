@@ -25,10 +25,13 @@ export interface UpdateTaskData {
   domainAreaId?: string;
   projectId?: string;
   dodItems?: string[];
+  dodCompletedItems?: boolean[];
   nextAction?: string;
   durationMinutes?: number;
   priorityBucket?: PriorityBucket | null;
   dueAt?: Date | null;
+  completedAt?: Date | null;
+  forceCompleted?: boolean;
   energyFit?: EnergyLevel | null;
   urgency?: number | null;
   impact?: number | null;
@@ -146,5 +149,50 @@ export const taskRepository = {
    */
   async updateStatus(id: string, status: TaskStatus) {
     return this.update(id, { status });
+  },
+
+  /**
+   * Get recently completed tasks (completed within last 48 hours)
+   */
+  async getRecentlyCompleted() {
+    const fortyEightHoursAgo = new Date();
+    fortyEightHoursAgo.setHours(fortyEightHoursAgo.getHours() - 48);
+
+    return prisma.task.findMany({
+      where: {
+        status: 'DONE',
+        completedAt: {
+          gte: fortyEightHoursAgo,
+        },
+      },
+      include: {
+        domainArea: true,
+        project: true,
+      },
+      orderBy: { completedAt: 'desc' },
+    });
+  },
+
+  /**
+   * Get old completed tasks (completed more than 48 hours ago) for purging
+   */
+  async getOldCompletedTasks() {
+    const fortyEightHoursAgo = new Date();
+    fortyEightHoursAgo.setHours(fortyEightHoursAgo.getHours() - 48);
+
+    return prisma.task.findMany({
+      where: {
+        status: 'DONE',
+        completedAt: {
+          lt: fortyEightHoursAgo,
+          not: null,
+        },
+      },
+      select: {
+        id: true,
+        title: true,
+        completedAt: true,
+      },
+    });
   },
 };

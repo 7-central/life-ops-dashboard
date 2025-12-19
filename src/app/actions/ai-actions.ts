@@ -1,6 +1,7 @@
 'use server';
 
 import { taskRepository } from '@/data/repositories/task-repository';
+import { userProfileRepository } from '@/data/repositories/user-profile-repository';
 import { aiService } from '@/services/ai';
 import type { TaskForAI, PriorityScore, BulkPrioritizationResult } from '@/services/ai';
 import type { Task, DomainArea, Project } from '@/generated/prisma';
@@ -77,9 +78,31 @@ export async function scoreTaskWithAI(taskId: string): Promise<AIActionResult> {
 
 /**
  * Score all active tasks (READY, NOW, NEXT, LATER) and get prioritization recommendations
+ * Uses profile summary for context and subsets tasks to control cost
  */
 export async function scoreReadyTasksWithAI(): Promise<AIActionResult> {
   try {
+    // Get user profile summary
+    const profile = await userProfileRepository.get();
+    let profileContext: string | undefined;
+
+    if (profile.summary) {
+      // Use condensed summary
+      profileContext = profile.summary;
+    } else if (
+      profile.longTermGoals ||
+      profile.mediumTermGoals ||
+      profile.shortTermFocus ||
+      profile.priorityPrinciples
+    ) {
+      // Fall back to full profile if no summary
+      profileContext = `User Profile Context:
+Long-term goals: ${profile.longTermGoals || 'Not specified'}
+Medium-term goals: ${profile.mediumTermGoals || 'Not specified'}
+Short-term focus: ${profile.shortTermFocus || 'Not specified'}
+Priority principles: ${profile.priorityPrinciples || 'Not specified'}`.trim();
+    }
+
     // Get all active tasks from all priority buckets
     const [readyTasks, nowTasks, nextTasks, laterTasks] = await Promise.all([
       taskRepository.getReady(),
@@ -98,11 +121,53 @@ export async function scoreReadyTasksWithAI(): Promise<AIActionResult> {
       };
     }
 
-    // Convert to AI format
-    const tasksForAI = allTasks.map(taskToAIFormat);
+    // Task subsetting for cost control (max 30 tasks)
+    // Priority: NOW, NEXT, READY, tasks with near due dates, tasks from same projects
+    const MAX_TASKS = 30;
+    let selectedTasks: (Task & { domainArea: DomainArea | null; project: Project | null })[] = [];
 
-    // Score with AI - passing all tasks so it can properly redistribute
-    const result = await aiService.scoreBulkPriority(tasksForAI);
+    // 1. Always include NOW and NEXT tasks (highest priority)
+    selectedTasks.push(...nowTasks, ...nextTasks);
+
+    // 2. Always include READY tasks (newly clarified)
+    selectedTasks.push(...readyTasks);
+
+    // 3. Add tasks with due dates in next 7 days from LATER
+    const sevenDaysFromNow = new Date();
+    sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
+
+    const laterTasksWithNearDueDates = laterTasks.filter(
+      (task) => task.dueAt && task.dueAt <= sevenDaysFromNow
+    );
+    selectedTasks.push(...laterTasksWithNearDueDates);
+
+    // 4. If we still have room, add tasks from same projects as newly clarified tasks
+    if (selectedTasks.length < MAX_TASKS && readyTasks.length > 0) {
+      const readyProjectIds = new Set(
+        readyTasks.map((t) => t.projectId).filter((id): id is string => id !== null)
+      );
+
+      const laterTasksFromSameProjects = laterTasks.filter(
+        (task) => task.projectId && readyProjectIds.has(task.projectId) && !selectedTasks.includes(task)
+      );
+
+      selectedTasks.push(...laterTasksFromSameProjects.slice(0, MAX_TASKS - selectedTasks.length));
+    }
+
+    // 5. If still have room, add most recent LATER tasks
+    if (selectedTasks.length < MAX_TASKS) {
+      const remainingLaterTasks = laterTasks.filter((task) => !selectedTasks.includes(task));
+      selectedTasks.push(...remainingLaterTasks.slice(0, MAX_TASKS - selectedTasks.length));
+    }
+
+    // Cap at MAX_TASKS
+    selectedTasks = selectedTasks.slice(0, MAX_TASKS);
+
+    // Convert to AI format
+    const tasksForAI = selectedTasks.map(taskToAIFormat);
+
+    // Score with AI - passing profile context and curated tasks
+    const result = await aiService.scoreBulkPriority(tasksForAI, profileContext);
 
     return {
       success: true,

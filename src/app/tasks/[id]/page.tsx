@@ -1,6 +1,7 @@
 import { prisma } from '@/data/prisma';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import { TaskBoardControls } from '@/components/features/task-board-controls';
 
 interface TaskDetailPageProps {
   params: Promise<{ id: string }>;
@@ -150,18 +151,14 @@ export default async function TaskDetailPage({ params }: TaskDetailPageProps) {
             </div>
           )}
 
-          {/* Definition of Done */}
+          {/* Definition of Done - Interactive Checklist */}
           {task.dodItems && task.dodItems.length > 0 && (
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-md">
-              <h2 className="text-2xl font-semibold mb-4">Definition of Done</h2>
-              <ul className="list-disc list-inside space-y-2">
-                {task.dodItems.map((item, idx) => (
-                  <li key={idx} className="text-lg">
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
+            <TaskBoardControls
+              taskId={task.id}
+              dodItems={task.dodItems}
+              dodCompletedItems={task.dodCompletedItems}
+              taskStatus={task.status}
+            />
           )}
 
           {/* Notes */}

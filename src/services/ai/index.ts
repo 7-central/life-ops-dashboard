@@ -115,9 +115,9 @@ class AIService {
   /**
    * Score multiple tasks and get distribution recommendations
    */
-  async scoreBulkPriority(tasks: TaskForAI[]): Promise<BulkPrioritizationResult> {
+  async scoreBulkPriority(tasks: TaskForAI[], profileContext?: string): Promise<BulkPrioritizationResult> {
     this.ensureProvider();
-    return this.provider!.scoreBulkPriority(tasks);
+    return this.provider!.scoreBulkPriority(tasks, profileContext);
   }
 
   /**

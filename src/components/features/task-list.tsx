@@ -38,7 +38,18 @@ export function TaskList({ tasks, domainAreas, projects }: TaskListProps) {
   }, {} as Record<TaskStatus, TaskWithRelations[]>);
 
   async function handleDelete(taskId: string) {
-    if (!confirm('Are you sure you want to abandon this task?')) return;
+    const confirmed = confirm(
+      '⚠️ PERMANENT DELETE\n\n' +
+      'This will permanently delete this task and ALL related data:\n' +
+      '- Task details\n' +
+      '- Time blocks\n' +
+      '- Shipped outputs\n' +
+      '- History/audit events\n\n' +
+      'This action CANNOT be undone.\n\n' +
+      'Are you absolutely sure you want to delete this task?'
+    );
+
+    if (!confirmed) return;
 
     setDeletingTaskId(taskId);
     try {
@@ -160,7 +171,9 @@ export function TaskList({ tasks, domainAreas, projects }: TaskListProps) {
                   >
                     <div className="flex justify-between items-start mb-2">
                       <div className="flex-1">
-                        <h4 className="font-semibold text-lg">{task.title}</h4>
+                        <Link href={`/tasks/${task.id}`} className="hover:text-blue-600 transition">
+                          <h4 className="font-semibold text-lg cursor-pointer">{task.title}</h4>
+                        </Link>
                         <div className="flex gap-3 mt-1 text-sm text-gray-600 dark:text-gray-400">
                           {task.domainArea && <span>{task.domainArea.name}</span>}
                           {task.project && <span>• {task.project.name}</span>}

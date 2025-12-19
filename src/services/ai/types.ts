@@ -73,8 +73,10 @@ export interface AIProviderInterface {
 
   /**
    * Score multiple tasks and suggest distribution
+   * @param tasks Tasks to prioritize
+   * @param profileContext Optional user profile summary for context
    */
-  scoreBulkPriority(tasks: TaskForAI[]): Promise<BulkPrioritizationResult>;
+  scoreBulkPriority(tasks: TaskForAI[], profileContext?: string): Promise<BulkPrioritizationResult>;
 
   /**
    * Test provider connection

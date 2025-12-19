@@ -196,12 +196,13 @@ export class AnthropicProvider implements AIProviderInterface {
     }
   }
 
-  async scoreBulkPriority(tasks: TaskForAI[]): Promise<BulkPrioritizationResult> {
-    const prompt = this.buildBulkTaskPrompt(tasks);
+  async scoreBulkPriority(tasks: TaskForAI[], profileContext?: string): Promise<BulkPrioritizationResult> {
+    const prompt = this.buildBulkTaskPrompt(tasks, profileContext);
 
     try {
       console.log('AI Request - Model:', this.model);
       console.log('AI Request - Task count:', tasks.length);
+      console.log('AI Request - Profile context provided:', !!profileContext);
       console.log('AI Request - Using beta API with structured outputs');
 
       const response = await this.client.beta.messages.create({
@@ -303,7 +304,7 @@ Consider:
 Calculate score using: (urgency × impact) / effort, adjusted for deadlines and clarity.`;
   }
 
-  private buildBulkTaskPrompt(tasks: TaskForAI[]): string {
+  private buildBulkTaskPrompt(tasks: TaskForAI[], profileContext?: string): string {
     const taskList = tasks
       .map(
         (task, idx) => `
@@ -321,12 +322,29 @@ Task ${idx + 1}:
       )
       .join('\n---\n');
 
+    const profileSection = profileContext
+      ? `
+# User Context
+
+${profileContext}
+
+Use this context to inform your prioritization decisions. Align recommendations with the user's goals, focus areas, and principles. Deprioritize tasks that don't align with stated priorities or are identified as "busy work".
+
+---
+`
+      : '';
+
     return `You are a task prioritization expert. Analyze these ${tasks.length} tasks and recommend how to distribute them across priority buckets.
 
-IMPORTANT: You are receiving ALL tasks from all priority buckets (NOW, NEXT, LATER, and READY).
+IMPORTANT: You are receiving a curated subset of tasks from all priority buckets (NOW, NEXT, LATER, and READY).
 Your job is to REDISTRIBUTE all of them according to the prioritization rules below.
 
+${profileSection}
+# Tasks
+
 ${taskList}
+
+---
 
 Priority Buckets:
 - NOW: EXACTLY 1 task (what to work on right now)
@@ -364,7 +382,10 @@ CRITICAL Prioritization Rules:
 2. Select up to 3 high-priority tasks for NEXT (maximum 3)
 3. Place ALL remaining tasks in LATER
 4. EVERY task ID must appear in exactly one bucket (now, next, or later)
-5. Consider: urgency, impact, effort, deadlines, and dependencies
-6. Balance quick wins with high-impact work`;
+5. Consider: urgency, impact, effort, deadlines, dependencies, and USER CONTEXT
+6. Balance quick wins with high-impact work
+7. Prioritize tasks that align with user's stated goals and principles
+8. Deprioritize "busy work" or tasks that don't align with user priorities`;
   }
+}
 }
