@@ -1,7 +1,6 @@
 'use server';
 
 import { taskRepository } from '@/data/repositories/task-repository';
-import { timeboxRepository } from '@/data/repositories/timebox-repository';
 import { canMoveToNow, canMoveToNext } from '@/domain/task/rules';
 import type { TaskStatus } from '@/generated/prisma';
 import { revalidatePath } from 'next/cache';
